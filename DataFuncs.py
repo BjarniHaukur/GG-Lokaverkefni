@@ -5,29 +5,6 @@ import random
 import json
 from PIL import Image
 
-def train_test_split(ratio_test):
-    rootPath = os.getcwd()
-    trainDir = os.path.join(rootPath, "train")
-    testDir = os.path.join(rootPath, "test")
-
-    try:
-        shutil.rmtree(testDir)
-    except:
-        pass
-
-    os.mkdir(testDir)
-
-    for (_, dirNames, _) in walk(trainDir):
-        for dirName in dirNames:
-            newTrainDir = os.path.join(trainDir, dirName)
-            newTestDir = os.path.join(testDir, dirName)
-            os.mkdir(newTestDir)
-            for (_, _, filenames) in walk(newTrainDir):
-                for name in filenames:
-                    if random.random() < ratio_test:
-                        oldpath = os.path.join(newTrainDir, name)
-                        newpath = os.path.join(newTestDir, name)
-                        shutil.move(oldpath, newpath)
 
 def resizable(img_size, aspect_ratio, tolerance):
     width = img_size[0]
@@ -76,6 +53,28 @@ def normalize_train_data(data_dir, norm_size=(500,500), aspect_ratio = 1.5, tole
                         img.save(os.path.join(failPath, nameDict[category]+str(imgNumber)+".jpg"), "JPEG")
                     imgNumber = imgNumber + 1
 
+def train_test_split(ratio_test):
+    rootPath = os.getcwd()
+    trainDir = os.path.join(rootPath, "train")
+    testDir = os.path.join(rootPath, "test")
 
+    try:
+        shutil.rmtree(testDir)
+    except:
+        pass
+
+    os.mkdir(testDir)
+
+    for (_, dirNames, _) in walk(trainDir):
+        for dirName in dirNames:
+            newTrainDir = os.path.join(trainDir, dirName)
+            newTestDir = os.path.join(testDir, dirName)
+            os.mkdir(newTestDir)
+            for (_, _, filenames) in walk(newTrainDir):
+                for name in filenames:
+                    if random.random() < ratio_test:
+                        oldpath = os.path.join(newTrainDir, name)
+                        newpath = os.path.join(newTestDir, name)
+                        shutil.move(oldpath, newpath)
 
 
