@@ -45,7 +45,7 @@ def normalize_train_data(data_dir, norm_size=(500,500), aspect_ratio = 1.5, tole
 
                 imgNumber = 1
                 for imgName in fileNames:
-                    img = Image.open(readPath+"\\"+imgName)
+                    img = Image.open(readPath+"\\"+imgName).convert('L')
                     if resizable(img.size, aspect_ratio, tolerance):
                         img = img.resize(norm_size)
                         img.save(os.path.join(writePath, nameDict[category]+str(imgNumber)+".jpg"), "JPEG")
