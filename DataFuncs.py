@@ -14,7 +14,7 @@ def resizable(img_size, aspect_ratio, tolerance):
         return aspect_ratio - tolerance <= width/height <= aspect_ratio + tolerance
     return aspect_ratio - tolerance <= height/width <= aspect_ratio + tolerance
 
-def normalize_train_data(data_dir, norm_size=(500,500), aspect_ratio = 1.5, tolerance = 0.5):
+def normalize_train_data(data_dir, grayScale = False, norm_size=(500,500), aspect_ratio = 1.5, tolerance = 0.5):
     rootPath = os.getcwd()
 
     dataPath = os.path.join(rootPath, data_dir)
@@ -46,6 +46,7 @@ def normalize_train_data(data_dir, norm_size=(500,500), aspect_ratio = 1.5, tole
                 imgNumber = 1
                 for imgName in fileNames:
                     img = Image.open(readPath+"\\"+imgName)
+                    
                     if resizable(img.size, aspect_ratio, tolerance):
                         img = img.resize(norm_size)
                         img.save(os.path.join(writePath, nameDict[category]+str(imgNumber)+".jpg"), "JPEG")
