@@ -1,7 +1,6 @@
 import os
 from os import walk
 import shutil
-import random
 import json
 import numpy as np
 from PIL import Image
@@ -10,12 +9,10 @@ from PIL import Image
 
 class MyDataLoader(object):   
 
-    def __init__(self, dirName, jsonName="cat_to_name.json", trainName="train", testName="test", valName="val"):
+    def __init__(self, dirName, jsonName="cat_to_name.json", trainName="train"):
         self.dirName = dirName
         self.jsonName = jsonName
         self.trainName = trainName
-        self.testName = testName
-        self.valName = valName
 
         self.rootPath  = os.getcwd()
         self.dataPath  = os.path.join(self.rootPath, self.dirName)
@@ -26,15 +23,14 @@ class MyDataLoader(object):
         
         self.failPath  = os.path.join(self.trainPath, "fail")
 
-
         with open(self.jsonName) as json_file:
             self.nameDict = json.load(json_file)
-
-        self.norm_size = 0
         
+        self.norm_size = (500,500)
 
     def normalize_train_data(self, norm_size=(500,500), aspect_ratio = 1.5, tolerance = 0.5):
-        self.norm_size=norm_size
+
+        self.norm_size = norm_size
 
         try:
             shutil.rmtree(self.trainPath)
@@ -84,11 +80,15 @@ class MyDataLoader(object):
     
 
 
-    def to_numpy_array(self, color):
-        color_settings = {"rgb":3, "grayscale":1}
-        num_color_channesl = color_settings[color]
-        X_train, y_train = self.__read_classification(self.trainPath, self.__dir_size(self.trainPath), num_color_channesl)                
-        X_test, y_test = self.__read_classification(self.testPath, self.__dir_size(self.testPath), num_color_channesl)        
+    def get_classification_data(self, norm_size):
+        X_train, y_train = self.__read_classification(self.trainPath, self.__dir_size(self.trainPath))                
+        X_test, y_test = self.__read_classification(self.testPath, self.__dir_size(self.testPath))        
+        return X_train, y_train, X_test, y_test
+
+
+    def get_colorization_data(self, color):
+        X_train, y_train = self.__read_classification(self.trainPath, self.__dir_size(self.trainPath))                
+        X_test, y_test = self.__read_classification(self.testPath, self.__dir_size(self.testPath))        
         return X_train, y_train, X_test, y_test
 
     
@@ -115,10 +115,7 @@ class MyDataLoader(object):
             return 0
 
     def __read_classification(self, path, size, num_color_channels=1):
-        if num_color_channels==1:
-            X = np.ndarray(shape=(size, self.norm_size[0], self.norm_size[1]), dtype=np.short)
-        else:
-            X = np.ndarray(shape=(size, self.norm_size[0], self.norm_size[1], num_color_channels), dtype=np.short)
+        X = np.ndarray(shape=(size, self.norm_size[0], self.norm_size[1]), dtype=np.short)
         y = np.ndarray(shape=size)
         iter = 0
         for (_, dirNames, _) in walk(path):
