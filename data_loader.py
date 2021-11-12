@@ -120,7 +120,7 @@ class MyDataLoader(object):
                 for (_, _, fileNames) in walk(readPath):
                     for name in fileNames:
                         img = Image.open(readPath+"\\"+name)
-                        X[iter] = np.ndarray(img, dtype=np.uint8)
+                        X[iter] = np.array(img, dtype=np.uint8)
                         y[iter] = dirName
                         iter = iter + 1
         return X, y
@@ -139,14 +139,14 @@ class MyDataLoader(object):
                 for (_, _, fileNames) in walk(XreadPath):
                     for name in fileNames:
                         img = Image.open(XreadPath+"\\"+name)
-                        X[tempIter] = np.ndarray(img, dtype=np.uint8)
+                        X[tempIter] = np.array(img, dtype=np.uint8)
                         tempIter = tempIter + 1
 
                 tempIter = iter
                 for (_, _, fileNames) in walk(yreadPath):
                     for name in fileNames:
                         img = Image.open(yreadPath+"\\"+name)
-                        y[tempIter] = np.ndarray(img, dtype=np.uint8)
+                        y[tempIter] = np.array(img, dtype=np.uint8)
                         tempIter = tempIter + 1
                 iter = tempIter
         return X, y
