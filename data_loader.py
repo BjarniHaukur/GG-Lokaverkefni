@@ -80,16 +80,12 @@ class MyDataLoader(object):
     
 
 
-    def get_classification_data(self, norm_size):
-        X_train, y_train = self.__read_classification(self.trainPath, self.__dir_size(self.trainPath))                
-        X_test, y_test = self.__read_classification(self.testPath, self.__dir_size(self.testPath))        
-        return X_train, y_train, X_test, y_test
+    def get_classification_data(self):                 
+        return self.__read_classification(self.__dir_size(self.trainPath))   
 
 
-    def get_colorization_data(self, color):
-        X_train, y_train = self.__read_classification(self.trainPath, self.__dir_size(self.trainPath))                
-        X_test, y_test = self.__read_classification(self.testPath, self.__dir_size(self.testPath))        
-        return X_train, y_train, X_test, y_test
+    def get_colorization_data(self):                  
+        return self.__read_colorization(self.__dir_size(self.trainPath))    
 
     
     def __resizable(self, img_size, aspect_ratio, tolerance):
@@ -114,40 +110,45 @@ class MyDataLoader(object):
             print("Not a valid path to directory")
             return 0
 
-    def __read_classification(self, path, size, num_color_channels=1):
-        X = np.ndarray(shape=(size, self.norm_size[0], self.norm_size[1]), dtype=np.short)
+    def __read_classification(self, size):
+        X = np.ndarray(shape=(size, self.norm_size[0], self.norm_size[1]), dtype=np.uint8)
         y = np.ndarray(shape=size)
         iter = 0
-        for (_, dirNames, _) in walk(path):
+        for (_, dirNames, _) in walk(self.XPath):
             for dirName in dirNames:
-                if dirName=="fail": continue
-                readPath = os.path.join(path, dirName)
+                readPath = os.path.join(self.XPath, dirName)
                 for (_, _, fileNames) in walk(readPath):
                     for name in fileNames:
                         img = Image.open(readPath+"\\"+name)
-                        X[iter] = np.array(img)
+                        X[iter] = np.ndarray(img, dtype=np.uint8)
                         y[iter] = dirName
                         iter = iter + 1
         return X, y
     
-    # TODO
-    def __read_colorization(self, path, size, num_color_channels=1):
-        if num_color_channels==1:
-            X = np.ndarray(shape=(size, self.norm_size[0], self.norm_size[1]), dtype=np.short)
-        else:
-            X = np.ndarray(shape=(size, self.norm_size[0], self.norm_size[1], num_color_channels), dtype=np.short)
-        y = np.ndarray(shape=size)
+    def __read_colorization(self, size):
+        X = np.ndarray(shape=(size, self.norm_size[0], self.norm_size[1]), dtype=np.uint8)
+        y = np.ndarray(shape=(size, self.norm_size[0], self.norm_size[1], 3), dtype=np.uint8)
         iter = 0
-        for (_, dirNames, _) in walk(path):
+        for (_, dirNames, _) in walk(self.XPath):
             for dirName in dirNames:
                 if dirName=="fail": continue
-                readPath = os.path.join(path, dirName)
-                for (_, _, fileNames) in walk(readPath):
+                XreadPath = os.path.join(self.XPath, dirName)
+                yreadPath = os.path.join(self.yPath, dirName)
+
+                tempIter = iter
+                for (_, _, fileNames) in walk(XreadPath):
                     for name in fileNames:
-                        img = Image.open(readPath+"\\"+name)
-                        X[iter] = np.array(img)
-                        y[iter] = dirName
-                        iter = iter + 1
+                        img = Image.open(XreadPath+"\\"+name)
+                        X[tempIter] = np.ndarray(img, dtype=np.uint8)
+                        tempIter = tempIter + 1
+
+                tempIter = iter
+                for (_, _, fileNames) in walk(yreadPath):
+                    for name in fileNames:
+                        img = Image.open(yreadPath+"\\"+name)
+                        y[tempIter] = np.ndarray(img, dtype=np.uint8)
+                        tempIter = tempIter + 1
+                iter = tempIter
         return X, y
 
     
