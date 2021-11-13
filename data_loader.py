@@ -4,7 +4,7 @@ import shutil
 import json
 import numpy as np
 from PIL import Image
-
+from tqdm import tqdm
 
 
 class MyDataLoader(object):   
@@ -42,8 +42,8 @@ class MyDataLoader(object):
         os.mkdir(self.failPath)
 
         for (_, dirNames, _) in walk(self.dataPath):
-
-            for category in dirNames:
+            if dirNames==[]: continue
+            for category in tqdm(dirNames):
                 readPath = os.path.join(self.dataPath, category)
                 writePath = os.path.join(self.yPath, category)
                 os.mkdir(writePath)
@@ -64,8 +64,8 @@ class MyDataLoader(object):
         if os.path.isdir(self.yPath):
             os.mkdir(self.XPath)
             for (_, dirNames, _) in walk(self.yPath):
-
-                for category in dirNames:
+                if dirNames==[]: continue
+                for category in tqdm(dirNames):
                     readPath = os.path.join(self.yPath, category)
                     writePath = os.path.join(self.XPath, category)
                     os.mkdir(writePath)
@@ -81,11 +81,11 @@ class MyDataLoader(object):
 
 
     def get_classification_data(self):                 
-        return self.__read_classification(self.__dir_size(self.trainPath))   
+        return self.__read_classification(self.__dir_size(self.XPath))   
 
 
     def get_colorization_data(self):                  
-        return self.__read_colorization(self.__dir_size(self.trainPath))    
+        return self.__read_colorization(self.__dir_size(self.XPath))    
 
     
     def __resizable(self, img_size, aspect_ratio, tolerance):
@@ -101,11 +101,10 @@ class MyDataLoader(object):
             size = 0
             for (_, dirNames, _) in walk(path):
                 for dirName in dirNames:
-                    if dirName == "fail": continue
-                    readPath = os.path.join(self.trainPath, dirName)
+                    readPath = os.path.join(path, dirName)
                     for (_, _, fileNames) in walk(readPath):
                         size = size + len(fileNames)
-            return size-1
+            return size
         else:
             print("Not a valid path to directory")
             return 0
@@ -115,7 +114,8 @@ class MyDataLoader(object):
         y = np.ndarray(shape=size)
         iter = 0
         for (_, dirNames, _) in walk(self.XPath):
-            for dirName in dirNames:
+            if dirNames==[]: continue
+            for dirName in tqdm(dirNames):
                 readPath = os.path.join(self.XPath, dirName)
                 for (_, _, fileNames) in walk(readPath):
                     for name in fileNames:
@@ -130,7 +130,8 @@ class MyDataLoader(object):
         y = np.ndarray(shape=(size, self.norm_size[0], self.norm_size[1], 3), dtype=np.uint8)
         iter = 0
         for (_, dirNames, _) in walk(self.XPath):
-            for dirName in dirNames:
+            if dirNames==[]: continue
+            for dirName in tqdm(dirNames):
                 if dirName=="fail": continue
                 XreadPath = os.path.join(self.XPath, dirName)
                 yreadPath = os.path.join(self.yPath, dirName)
