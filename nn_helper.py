@@ -20,7 +20,7 @@ def save_model(model, dirName, brave=False):
     root = os.getcwd()
     myDir = os.path.join(root, dirName)
     if os.path.isdir(myDir):
-        print("Directory already exists, overwrite?")
+        if not brave: print("Directory already exists, overwrite?")
         if brave or __prompt():
             shutil.rmtree(myDir)
             os.mkdir(myDir)

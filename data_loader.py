@@ -10,20 +10,23 @@ from skimage import color
 
 class MyDataLoader(object):   
 
-    def __init__(self, dirName, norm_size, jsonName="cat_to_name.json", trainName="train"):
+    def __init__(self, dirName, norm_size, jsonName="cat_to_name.json", trainName="train", dumpName="arrays"):
         self.dirName = dirName
         self.jsonName = jsonName
         self.trainName = trainName
         self.norm_size = norm_size
+        self.dumpName = dumpName
 
         self.rootPath  = os.getcwd()
         self.dataPath  = os.path.join(self.rootPath, self.dirName)
 
         self.trainPath = os.path.join(self.rootPath, self.trainName)
         self.XPath = os.path.join(self.trainPath, "X")
-        self.yPath = os.path.join(self.trainPath, "y")
-        
         self.failPath  = os.path.join(self.trainPath, "fail")
+        self.yPath = os.path.join(self.trainPath, "y")
+
+        self.dumpPath = os.path.join(self.rootPath, dumpName)
+        
 
         with open(self.jsonName) as json_file:
             self.nameDict = json.load(json_file)
@@ -94,6 +97,32 @@ class MyDataLoader(object):
         X = np.expand_dims(lab[:,:,:,0], -1)
         y = lab[:,:,:,1:]
         return X, y
+
+    def numpy_dump(self, arr, name):
+        if not os.path.isdir(self.dumpPath):
+            os.mkdir(self.dumpPath)
+        
+        arrPath = os.path.join(self.dumpPath, name)
+        try:
+            os.rmdir(arrPath)
+        except:
+            pass
+
+        np.save(arrPath, arr)
+    
+    def numpy_load(self, name):
+        if os.path.isdir(self.dumpPath):
+            read = os.path.join(self.dumpPath, name)
+            if os.path.isfile(read):
+                return np.load(read)
+            read = os.path.join(self.dumpPath, name+".npy")
+            if os.path.isfile(read):
+                return np.load(read)
+            else:
+                print("No such file")
+        else:
+            print("No such directory")
+        
 
     
     def __resizable(self, img_size, aspect_ratio, tolerance):
