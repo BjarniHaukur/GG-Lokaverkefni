@@ -16,12 +16,12 @@ def __prompt():
     else:
         __prompt()
 
-def save_model(model, dirName):
+def save_model(model, dirName, brave=False):
     root = os.getcwd()
     myDir = os.path.join(root, dirName)
     if os.path.isdir(myDir):
         print("Directory already exists, overwrite?")
-        if __prompt():
+        if brave or __prompt():
             shutil.rmtree(myDir)
             os.mkdir(myDir)
             model.save(dirName)
