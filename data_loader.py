@@ -5,14 +5,16 @@ import json
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
+from skimage import color
 
 
 class MyDataLoader(object):   
 
-    def __init__(self, dirName, jsonName="cat_to_name.json", trainName="train"):
+    def __init__(self, dirName, norm_size, jsonName="cat_to_name.json", trainName="train"):
         self.dirName = dirName
         self.jsonName = jsonName
         self.trainName = trainName
+        self.norm_size = norm_size
 
         self.rootPath  = os.getcwd()
         self.dataPath  = os.path.join(self.rootPath, self.dirName)
@@ -26,7 +28,7 @@ class MyDataLoader(object):
         with open(self.jsonName) as json_file:
             self.nameDict = json.load(json_file)
         
-        self.norm_size = (500,500)
+        
 
     def normalize_train_data(self, norm_size=(500,500), aspect_ratio = 1.5, tolerance = 0.5):
 
@@ -60,7 +62,7 @@ class MyDataLoader(object):
                             img.save(os.path.join(self.failPath, self.nameDict[category]+str(imgNumber)+".jpg"), "JPEG")
                         imgNumber = imgNumber + 1
 
-    def make_colorization_data(self):
+    def make_grayscale_data(self):
         if os.path.isdir(self.yPath):
             os.mkdir(self.XPath)
             for (_, dirNames, _) in walk(self.yPath):
@@ -84,8 +86,14 @@ class MyDataLoader(object):
         return self.__read_classification(self.__dir_size(self.XPath))   
 
 
-    def get_colorization_data(self):                  
-        return self.__read_colorization(self.__dir_size(self.XPath))    
+    def get_rgb_data(self):                  
+        return self.__read_colorization(self.__dir_size(self.XPath))
+
+    def get_lab_data(self):
+        lab = self.__read_lab(self.__dir_size(self.yPath))
+        X = np.expand_dims(lab[:,:,:,0], -1)
+        y = lab[:,:,:,1:]
+        return X, y
 
     
     def __resizable(self, img_size, aspect_ratio, tolerance):
@@ -109,6 +117,21 @@ class MyDataLoader(object):
             print("Not a valid path to directory")
             return 0
 
+    def __read_lab(self, size):
+        lab = np.ndarray(shape=(size, self.norm_size[0], self.norm_size[1], 3), dtype=np.int8)
+        iter = 0
+        for (_, dirNames, _) in walk(self.yPath):
+            if dirNames==[]: continue
+            for dirName in tqdm(dirNames):
+                readPath = os.path.join(self.yPath, dirName)
+                for (_, _, fileNames) in walk(readPath):
+                    for name in fileNames:
+                        img = color.rgb2lab(Image.open(readPath+"\\"+name))
+                        lab[iter] = np.array(img, dtype=np.int8)
+                        iter = iter + 1
+        return lab
+
+
     def __read_classification(self, size):
         X = np.ndarray(shape=(size, self.norm_size[0], self.norm_size[1]), dtype=np.uint8)
         y = np.ndarray(shape=size)
@@ -125,7 +148,7 @@ class MyDataLoader(object):
                         iter = iter + 1
         return X, y
     
-    def __read_colorization(self, size):
+    def __read_rgb(self, size):
         X = np.ndarray(shape=(size, self.norm_size[0], self.norm_size[1]), dtype=np.uint8)
         y = np.ndarray(shape=(size, self.norm_size[0], self.norm_size[1], 3), dtype=np.uint8)
         iter = 0
