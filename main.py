@@ -2,8 +2,9 @@ from sklearn.model_selection import train_test_split
 from keras.layers import Input, Conv2D, BatchNormalization, UpSampling2D, Dense, InputLayer
 from keras.models import Model
 from keras.regularizers import l2
+from sklearn.utils import validation
 from tensorflow.keras.optimizers.schedules import PolynomialDecay
-from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.optimizers import *
 from keras import Sequential
 import numpy as np
 from PIL import Image
@@ -12,6 +13,8 @@ from data_loader import MyDataLoader
 from nn_helper import save_model, load_model
 from neural_nets import NeuralNets
 from skimage import color
+
+from tensorflow.keras.callbacks import EarlyStopping
 
 import tensorflow as tf
 import sys
@@ -23,7 +26,6 @@ def main():
     # config.gpu_options.allow_growth = True
     # config.gpu_options.per_process_gpu_memory_fraction = 0.8
     # tf.Session(config=config)
-
 
     gpus = tf.config.list_physical_devices('GPU')
 
@@ -52,30 +54,32 @@ def main():
     # print(np.min(y_lab))
 
 
-    model = nn.model_c()
-    model.compile(optimizer=Adam(1e-3), loss='msle')
+    model = nn.model_e()
+    model.compile(optimizer=RMSprop(), loss='mse')
 
-    # model = load_model("model_c")
+    #model = load_model("model_d")
     
 
-    num_epochs = 20
+    num_epochs = 30
 
-    percent = 0.6
-    size = X_train.shape[0]
+    # percent = 0.6
+    # size = X_train.shape[0]
+    # patience = 5
+    # callback = EarlyStopping(monitor="val_loss", patience=patience)
 
     canvas = np.zeros((norm[0],norm[1],3))
-    nr = 69
+    nr = 101
     test_image = X_test[nr]
     test_image = np.expand_dims(test_image, axis=0)
     for i in range(num_epochs):
         canvas = np.zeros((norm[0],norm[1],3))
 
-        index_array = np.random.choice(size, int(size*percent))
-        X_batch = X_train[index_array]
-        y_batch = y_train[index_array]
+        # index_array = np.random.choice(size, int(size*percent))
+        # X_batch = X_train[index_array]
+        # y_batch = y_train[index_array]
 
-        model.fit(X_batch, y_batch, batch_size = 32, epochs = 5)
-        save_model(model, "model_c", brave=True)
+        model.fit(X_train, y_train, batch_size = 64, epochs = 5, validation_data=(X_val, y_val), verbose=2)#, callbacks=[callback])
+        save_model(model, "model_e", brave=True)
 
         pred = model.predict(test_image)
         canvas[:,:,0] = test_image[0,:,:,0]*100

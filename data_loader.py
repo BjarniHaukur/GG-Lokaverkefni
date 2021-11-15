@@ -33,7 +33,7 @@ class MyDataLoader(object):
         
         
 
-    def normalize_train_data(self, norm_size=(500,500), aspect_ratio = 1.5, tolerance = 0.5):
+    def normalize_train_data(self, norm_size, aspect_ratio = 1.5, tolerance = 0.5):
 
         self.norm_size = norm_size
 
