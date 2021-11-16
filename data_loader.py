@@ -94,8 +94,8 @@ class MyDataLoader(object):
 
     def get_lab_data(self):
         lab = self.__read_lab(self.__dir_size(self.yPath))
-        X = np.expand_dims(lab[:,:,:,0], -1)
-        y = lab[:,:,:,1:]
+        X = (np.expand_dims(lab[:,:,:,0], -1)/100).astype(np.float16)
+        y = (lab[:,:,:,1:]/128).astype(np.float16)
         return X, y
 
     def numpy_dump(self, arr, name):
