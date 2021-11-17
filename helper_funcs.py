@@ -1,5 +1,6 @@
 import os
 import shutil
+from PIL import ImageEnhance
 from PIL import Image
 from skimage import color
 import numpy as np
@@ -55,13 +56,15 @@ def show_images(X, predictions):
     if not X.shape[0]==num_images:
         print("Arrays do not have the same dimensions")
         return
-
+    
     for i in range(num_images):
         canvas = np.zeros((height, width, 3))
         canvas[:,:,0] = X[i,:,:,0]*100
         canvas[:,:,1:] = predictions[i]*128
         canvas = (color.lab2rgb(canvas)*255).astype(np.uint8)
         img = Image.fromarray(canvas)
+        converter = ImageEnhance.Color(img)
+        img = converter.enhance(1.5)
         img.show()
 
 def save_images(X, predictions, name="mynd", enumerate=None):
@@ -84,6 +87,8 @@ def save_images(X, predictions, name="mynd", enumerate=None):
         canvas[:,:,1:] = predictions[i]*128
         canvas = (color.lab2rgb(canvas)*255).astype(np.uint8)
         img = Image.fromarray(canvas)
+        converter = ImageEnhance.Color(img)
+        img = converter.enhance(1.5)
         if enumerate:
             img.save(os.path.join(writePath, f"{name}{enumerate+1}_{i+1}.jpg"), 'JPEG') 
         else:
