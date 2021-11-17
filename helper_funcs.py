@@ -90,10 +90,26 @@ def save_images(X, predictions, name="mynd", enumerate=None):
             img.save(os.path.join(writePath, f"{name}{i+1}.jpg"), 'JPEG')
 
 def map_to(arr):
-    func = lambda x: (x+1)/2
-    return func(arr)
-    #np.vectorize(func)(arr)
+    new_arr = np.zeros(shape=arr.shape, dtype=np.float16)
+    for i in range(arr.shape[3]):
+        arr_min = np.min(arr[:,:,:,i])
+        arr_max = np.max(arr[:,:,:,i])
+        new_arr[:,:,:,i] = (arr[:,:,:,i]-arr_min)/(arr_max-arr_min)
+    return new_arr
 
-def map_from(arr):
-    func = lambda x: 2*x-1
-    return func(arr)
+def map_from(arr, old):
+    new_arr = np.zeros(shape=arr.shape, dtype=np.float16)
+    for i in range(arr.shape[3]):
+        old_min = np.min(old[:,:,:,i])
+        old_max = np.max(old[:,:,:,i])
+        new_arr[:,:,:,i] = arr[:,:,:,i]*(old_max-old_min)+old_min
+    return new_arr
+
+# def map_to(arr):
+#     func = lambda x: (x+1)/2
+#     return func(arr)
+#     #np.vectorize(func)(arr)
+
+# def map_from(arr):
+#     func = lambda x: 2*x-1
+#     return func(arr)
