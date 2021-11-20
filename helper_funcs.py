@@ -48,7 +48,7 @@ def delete_model(dirName):
     myDir = os.path.join(root, dirName)
     shutil.rmtree(myDir)
 
-def show_images(X, predictions):
+def show_images(X, predictions, enhance=False):
     num_images = predictions.shape[0]
     height = predictions.shape[1]
     width = predictions.shape[2]
@@ -63,11 +63,12 @@ def show_images(X, predictions):
         canvas[:,:,1:] = predictions[i]*128
         canvas = (color.lab2rgb(canvas)*255).astype(np.uint8)
         img = Image.fromarray(canvas)
-        converter = ImageEnhance.Color(img)
-        img = converter.enhance(1.5)
+        if enhance:
+            converter = ImageEnhance.Color(img)
+            img = converter.enhance(1.5)
         img.show()
 
-def save_images(X, predictions, name="mynd", enumerate=None):
+def save_images(X, predictions, name="mynd", enhance=False, enumerate=None):
     num_images = predictions.shape[0]
     height = predictions.shape[1]
     width = predictions.shape[2]
@@ -87,8 +88,9 @@ def save_images(X, predictions, name="mynd", enumerate=None):
         canvas[:,:,1:] = predictions[i]*128
         canvas = (color.lab2rgb(canvas)*255).astype(np.uint8)
         img = Image.fromarray(canvas)
-        converter = ImageEnhance.Color(img)
-        img = converter.enhance(1.5)
+        if enhance:
+            converter = ImageEnhance.Color(img)
+            img = converter.enhance(1.5)
         if enumerate:
             img.save(os.path.join(writePath, f"{name}{enumerate+1}_{i+1}.jpg"), 'JPEG') 
         else:

@@ -181,20 +181,28 @@ class NeuralNets(object):
                 model.add(Conv2D(2, kernel, activation='sigmoid', padding='same', name='ouput'))
                 model.add(BatchNormalization())
                 return model
-        def model_s(self, input_shape=(128, 128, 1)):
-                input_shape = input_shape
+
+        def model_s(self):
+                input_shape = (self.norm_size[0], self.norm_size[1], 1)
+                X = self.norm_size[0]
                 model = Sequential()
-                model.add(InputLayer(input_shape=(128, 128, 1)))
+                model.add(InputLayer(input_shape=input_shape))
 
-                model.add(Conv2D(16, (3, 3), activation="relu", padding="same"))
-                model.add(MaxPooling2D(pool_size=(3, 3), strides=1, padding="same"))
+                model.add(Conv2D(32, (3, 3), activation="relu", padding="same"))
+                # model.add(UpSampling2D((2, 2)))
+                model.add(Conv2D(64, (3, 3), activation="relu", padding="same"))
 
+                model.add(Conv2D(128, (3, 3), activation="relu", padding="same", strides=2))
+                # model.add(Conv2D(64, (3, 3), activation="relu", padding="same", strides=2))
+                model.add(MaxPool2D())
+                model.add(MaxPool2D())
+                # model.add(UpSampling2D((2, 2)))
                 model.add(Flatten())
-                model.add(Dense(1024))
-                model.add(Reshape((32, 32, -1)))
-
-                model.add(UpSampling2D((4, 4)))
-
+                model.add(Dense(64, activation="relu"))
+                model.add(Dense(4096, activation="relu"))
+                model.add(Reshape((64, 64, -1)))
+                model.add(UpSampling2D((2,2)))
+                # model.add(Reshape((X, X, -1)))
                 model.add(Conv2D(2, (3, 3), activation="sigmoid", padding="same"))
 
                 return model

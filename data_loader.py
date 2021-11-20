@@ -3,7 +3,7 @@ from os import walk
 import shutil
 import json
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageChops
 from tqdm import tqdm
 from skimage import color
 
@@ -60,9 +60,28 @@ class MyDataLoader(object):
                         img = Image.open(readPath+"\\"+imgName)
                         if self.__resizable(img.size, aspect_ratio, tolerance):
                             img = img.resize(norm_size)
-                            img.save(os.path.join(writePath, self.nameDict[category]+str(imgNumber)+".jpg"), "JPEG")
+                            try:
+                                if not self.__is_greyscale(img):
+                                    img.save(os.path.join(writePath, self.nameDict[category]+str(imgNumber)+".jpg"), "JPEG")
+                            except:
+                                try:
+                                    img = img.convert("RGB")
+                                    if not self.__is_greyscale(img):
+                                        img.save(os.path.join(writePath, self.nameDict[category]+str(imgNumber)+".jpg"), "JPEG")
+                                except:
+                                    raise ValueError(f"Cannot save image {imgName}")
+                                pass
                         else:
-                            img.save(os.path.join(self.failPath, self.nameDict[category]+str(imgNumber)+".jpg"), "JPEG")
+                            try:
+                                img.save(os.path.join(self.failPath, self.nameDict[category]+str(imgNumber)+".jpg"), "JPEG")
+                            except:
+                                try:
+                                    img = img.convert("RGB")
+                                    img.save(os.path.join(self.failPath, self.nameDict[category]+str(imgNumber)+".jpg"), "JPEG")
+                                except:
+                                    print(f"Cannot save image {imgName}")
+                                    pass
+                                pass
                         imgNumber = imgNumber + 1
 
     def make_grayscale_data(self):
@@ -132,6 +151,18 @@ class MyDataLoader(object):
         if width >= height:
             return aspect_ratio - tolerance <= width/height <= aspect_ratio + tolerance
         return aspect_ratio - tolerance <= height/width <= aspect_ratio + tolerance
+
+    def __is_greyscale(self, img):
+        if img.mode not in ("L", "RGB"):
+            raise ValueError("Unsuported image mode")
+
+        if img.mode == "RGB":
+            rgb = img.split()
+            if ImageChops.difference(rgb[0],rgb[1]).getextrema()[1]!=0: 
+                return False
+            if ImageChops.difference(rgb[0],rgb[2]).getextrema()[1]!=0: 
+                return False
+        return True
 
     def __dir_size(self, path):
         if(os.path.isdir(path)):
