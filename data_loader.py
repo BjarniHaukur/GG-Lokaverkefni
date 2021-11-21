@@ -159,10 +159,10 @@ class MyDataLoader(object):
         if os.path.isdir(self.dumpPath):
             read = os.path.join(self.dumpPath, name)
             if os.path.isfile(read):
-                return np.load(read)
+                return np.load(read, allow_pickle=True)
             read = os.path.join(self.dumpPath, name+".npy")
             if os.path.isfile(read):
-                return np.load(read)
+                return np.load(read, allow_pickle=True)
             else:
                 print("No such file")
         else:
