@@ -22,7 +22,8 @@ def parse_to_image(filename):
     image = tf.image.convert_image_dtype(image, tf.float16)
     image = tfio.experimental.color.rgb_to_lab(image)
     
-    return tf.expand_dims(image[:,:,0], -1)/100, (lambda x: (x+1)/2)(image[:,:,1:]/128)
+    return tf.expand_dims(image[:,:,0]/100, -1), (lambda x: (x+1)/2)(image[:,:,1:]/128)
+
 
 
 def augment_image(image):
