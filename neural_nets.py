@@ -10,13 +10,13 @@ class NeuralNets(object):
 
         def __init__(self, norm_size):
                 self.norm_size = norm_size
+                self.input_shape = (norm_size[0], norm_size[1], 1)
     
         def model_a(self, kernel = (3,3), sampling = (2,2)):
-                input_shape = (None, None, 1)
                 num_nodes = 32
 
                 model = Sequential()
-                model.add(InputLayer(input_shape=input_shape))
+                model.add(InputLayer(input_shape=self.input_shape))
                 model.add(Conv2D(num_nodes, kernel, activation='relu', padding='same'))
                 model.add(Conv2D(num_nodes, kernel, activation='relu', padding='same', strides=2))
                 model.add(Conv2D(num_nodes*2, kernel, activation='relu', padding='same'))
@@ -39,7 +39,7 @@ class NeuralNets(object):
 
         def model_c(self, kernel=2):
                 l2_reg = l2(1e-3)
-                input_tensor = Input(shape=(self.norm_size[0], self.norm_size[1], 1))
+                input_tensor = Input(shape=self.input_shape)
                 x = Conv2D(64, (kernel, kernel), activation='relu', padding='same', name='conv1_1', kernel_initializer="he_normal",
                         kernel_regularizer=l2_reg)(input_tensor)
                 x = Conv2D(64, (kernel, kernel), activation='relu', padding='same', name='conv1_2', kernel_initializer="he_normal",
@@ -113,7 +113,7 @@ class NeuralNets(object):
 
         def model_d(self, kernel = (2,2)):
                 model = Sequential()
-                model.add(InputLayer(input_shape=(self.norm_size[0], self.norm_size[1], 1)))
+                model.add(InputLayer(input_shape=self.input_shape))
                 model.add(Conv2D(64, kernel, activation='relu', padding='same', name='conv_1'))
                 model.add(Conv2D(64, kernel, activation='relu', padding='same', name='conv_2', strides=2))
                 model.add(Conv2D(128, kernel, activation='relu', padding='same', name='conv_3'))
@@ -133,14 +133,15 @@ class NeuralNets(object):
 
         def model_e(self):
                 model = Sequential()
-                model.add(InputLayer(input_shape=(None, None, 1)))
+                model.add(InputLayer(input_shape=self.input_shape))
                 model.add(Conv2D(32, (3, 3), activation='relu', padding='same', strides=2))
-                model.add(Conv2D(64, (3, 3), activation='relu', padding='same'))
+                model.add(UpSampling2D((2, 2)))
+                model.add(Conv2D(64, (3, 3), activation='relu', padding='same', strides=2))
+                # model.add(Conv2D(128, (3, 3), activation='relu', padding='same', strides=2))
                 model.add(Conv2D(128, (3, 3), activation='relu', padding='same', strides=2))
-                model.add(Conv2D(128, (3, 3), activation='relu', padding='same'))
                 model.add(Conv2D(128, (3, 3), activation='relu', padding='same', strides=2))
                 model.add(UpSampling2D((2, 2)))
-                model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
+                # model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
                 model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
                 model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
                 model.add(Conv2D(128, (3, 3), activation='relu', padding='same'))
@@ -150,9 +151,49 @@ class NeuralNets(object):
                 model.add(Conv2D(2, (3,3), activation='sigmoid', padding='same'))
                 return model
 
+        def model_f(self):
+                model = Sequential()
+                model.add(InputLayer(input_shape=self.input_shape))
+                model.add(Conv2D(64, (3, 3), activation='relu', padding='same'))
+                model.add(UpSampling2D((2, 2)))
+                model.add(Conv2D(64, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(128, (3, 3), activation='relu', padding='same'))
+                model.add(UpSampling2D((2, 2)))
+                model.add(Conv2D(128, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
+                model.add(UpSampling2D((2, 2)))
+                model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
+                model.add(UpSampling2D((2, 2)))
+                model.add(Conv2D(512, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2D(256, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2D(128, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2D(64, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2D(2, (3,3), activation='sigmoid', padding='same'))
+                return model
+
+        def model_z(self):
+                X = self.norm_size[0]
+                model = Sequential()
+                model.add(InputLayer(input_shape=self.input_shape))
+                model.add(Conv2D(32, (3, 3), activation="relu", padding="same", strides=2))
+                model.add(Conv2D(64, (3, 3), activation="relu", padding="same", strides=2))
+                model.add(MaxPool2D())
+                model.add(MaxPool2D())
+                # model.add(UpSampling2D((2, 2)))
+                model.add(Flatten())
+                model.add(Dense(64, activation="relu"))
+                model.add(Dense(2048, activation="relu"))
+                model.add(Dense(4096, activation="relu"))
+                model.add(Dense((X ** 2), activation="relu"))
+                model.add(Reshape((64, 64, -1)))
+                model.add(Conv2D(2, (3, 3), activation="sigmoid", padding="same"))
+                model.add(UpSampling2D((2, 2)))
+
+                return model
+
         def autoencoder_1(self, kernel=(3,3)):
                 model = Sequential()
-                model.add(InputLayer(input_shape=(None, None, 1), name='input'))
+                model.add(InputLayer(input_shape=self.input_shape, name='input'))
                 model.add(Conv2D(64, kernel, activation='relu', padding='same', name='encode_2', strides=2))
                 model.add(Conv2D(128, kernel, activation='relu', padding='same', name='encode_3', strides=2))
                 model.add(Conv2D(256, kernel, activation='relu', padding='same', name='encode_4', strides=2))
@@ -164,9 +205,9 @@ class NeuralNets(object):
                 model.add(Conv2D(2, kernel, activation='sigmoid', padding='same', name='ouput'))
                 return model
 
-        def autoencoder_2(self, input_shape=(128, 128, 1), kernel=(3,3)):
+        def autoencoder_2(self, kernel=(3,3)):
                 model = Sequential()
-                model.add(InputLayer(input_shape=input_shape, name='input'))
+                model.add(InputLayer(input_shape=self.input_shape, name='input'))
                 model.add(Conv2D(128, kernel, activation='relu', padding='same', name='encode_1', strides=(1,1)))
                 model.add(BatchNormalization())
                 model.add(Conv2D(128, kernel, activation='relu', padding='same', name='encode_2', strides=(1,1)))
@@ -183,10 +224,9 @@ class NeuralNets(object):
                 return model
 
         def model_s(self):
-                input_shape = (self.norm_size[0], self.norm_size[1], 1)
-                X = self.norm_size[0]
+                # X = self.norm_size[0]
                 model = Sequential()
-                model.add(InputLayer(input_shape=input_shape))
+                model.add(InputLayer(input_shape=self.input_shape))
 
                 model.add(Conv2D(32, (3, 3), activation="relu", padding="same"))
                 # model.add(UpSampling2D((2, 2)))

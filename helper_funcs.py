@@ -21,32 +21,45 @@ def __prompt():
 
 def save_model(model, dirName, brave=False):
     root = os.getcwd()
-    myDir = os.path.join(root, dirName)
+    modelDir = os.path.join(root, "models")
+
+    if not os.path.isdir(modelDir):
+        os.mkdir(modelDir)
+
+    myDir = os.path.join(modelDir, dirName)
+
     if os.path.isdir(myDir):
         if not brave: print("Directory already exists, overwrite?")
         if brave or __prompt():
             shutil.rmtree(myDir)
             os.mkdir(myDir)
-            model.save(dirName)
+            model.save(myDir)
         else:
             return
     else:
         os.mkdir(myDir)
-        model.save(dirName)
+        model.save(myDir)
 
 
 def load_model(dirName):
     root = os.getcwd()
-    myDir = os.path.join(root, dirName)
+    modelDir = os.path.join(root, "models")
+    myDir = os.path.join(modelDir, dirName)
+
     if os.path.isdir(myDir):
-        return keras.models.load_model(dirName)
+        return keras.models.load_model(myDir)
     else:
         print("No such directory")
 
 def delete_model(dirName):
     root = os.getcwd()
-    myDir = os.path.join(root, dirName)
-    shutil.rmtree(myDir)
+    modelDir = os.path.join(root, "models")
+    myDir = os.path.join(modelDir, dirName)
+    if os.path.isdir(myDir):
+        shutil.rmtree(myDir)
+    else:
+        print("No such directory")
+    
 
 def show_images(X, predictions, enhance=False):
     num_images = predictions.shape[0]

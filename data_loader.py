@@ -101,6 +101,32 @@ class MyDataLoader(object):
                             img.save(os.path.join(writePath, imgName), "JPEG")
         else:
             print("No such directory of normalized images. Have you executed normalize_train_data?")
+
+    def all_to_one(self):
+        onePath = os.path.join(self.yPath, "0")
+
+        if not os.path.isdir(onePath):
+            os.mkdir(onePath)
+
+        for (_, dirNames, _) in walk(self.yPath):
+
+            if dirNames==[]: continue
+            for dirName in tqdm(dirNames):
+                if dirName=="0": continue
+                dirPath = os.path.join(self.yPath, dirName)
+                for (_,_,fileNames) in walk(dirPath):
+                    
+                    for fileName in fileNames:
+                        readPath = os.path.join(dirPath, fileName)
+                        writePath = os.path.join(onePath, fileName)
+                        shutil.move(readPath, writePath)
+                        
+                os.rmdir(dirPath)
+                    
+                    
+
+
+
     
 
 
@@ -141,6 +167,25 @@ class MyDataLoader(object):
                 print("No such file")
         else:
             print("No such directory")
+
+    def get_all_filenames(self):
+        size = self.__dir_size(self.yPath)
+        filenames = np.empty(shape=size, dtype=object)
+        relativePath = os.path.join(self.trainName, "y")
+        count = 0
+        for (_, dirNames, _) in walk(self.yPath):
+
+            for dirName in dirNames:
+                readPath = os.path.join(self.yPath, dirName)
+
+                for (_, _, names) in walk(readPath):
+
+                    for name in names:
+                        tempPath = os.path.join(dirName, name)
+                        filenames[count] = os.path.join(relativePath, tempPath)
+                        count = count + 1
+        return filenames
+
         
 
     
