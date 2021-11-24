@@ -42,13 +42,13 @@ def save_model(model, dirName, brave=False):
         model.save(myDir)
 
 
-def load_model(dirName):
+def load_model(dirName, custom=None):
     root = os.getcwd()
     modelDir = os.path.join(root, "models")
     myDir = os.path.join(modelDir, dirName)
 
     if os.path.isdir(myDir):
-        return keras.models.load_model(myDir)
+        return keras.models.load_model(myDir, custom_objects=custom)
     else:
         print("No such directory")
 
