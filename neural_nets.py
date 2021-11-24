@@ -2,6 +2,7 @@
 from keras.layers import *
 from keras.models import Model
 from keras.regularizers import l2, l1
+from keras import backend as K
 from tensorflow.keras.optimizers.schedules import PolynomialDecay
 from tensorflow.keras.optimizers import Adam
 from keras import Sequential
@@ -11,7 +12,8 @@ class NeuralNets(object):
         def __init__(self, norm_size):
                 self.norm_size = norm_size
                 self.input_shape = (norm_size[0], norm_size[1], 1)
-    
+                self.output_shape = (norm_size[0], norm_size[1], 2)
+
         def model_a(self, kernel = (3,3), sampling = (2,2)):
                 num_nodes = 32
 
@@ -171,6 +173,44 @@ class NeuralNets(object):
                 model.add(Conv2D(2, (3,3), activation='sigmoid', padding='same'))
                 return model
 
+        def model_g(self):
+                model = Sequential()
+                model.add(InputLayer(input_shape=self.input_shape))
+                model.add(Conv2D(64, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(64, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2D(128, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(128, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(256, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(128, (3, 3), activation='relu', padding='same'))
+                model.add(UpSampling2D((2, 2)))
+                model.add(Conv2D(64, (3, 3), activation='relu', padding='same'))
+                model.add(UpSampling2D((2, 2)))
+                model.add(Conv2D(32, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(2, (3, 3), activation='sigmoid', padding='same'))
+                model.add(UpSampling2D((2, 2)))
+                return model
+        
+        def model_h(self):
+                model = Sequential()
+                model.add(InputLayer(input_shape=self.input_shape))
+                model.add(Conv2D(64, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(64, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2D(128, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(128, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(256, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2DTranspose(256, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2DTranspose(128, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2DTranspose(64, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2DTranspose(32, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2DTranspose(2, (3, 3), activation='sigmoid', padding='same'))
+                return model
+                
+
         def model_z(self):
                 X = self.norm_size[0]
                 model = Sequential()
@@ -191,37 +231,39 @@ class NeuralNets(object):
 
                 return model
 
-        def autoencoder_1(self, kernel=(3,3)):
-                model = Sequential()
-                model.add(InputLayer(input_shape=self.input_shape, name='input'))
-                model.add(Conv2D(64, kernel, activation='relu', padding='same', name='encode_2', strides=2))
-                model.add(Conv2D(128, kernel, activation='relu', padding='same', name='encode_3', strides=2))
-                model.add(Conv2D(256, kernel, activation='relu', padding='same', name='encode_4', strides=2))
-                model.add(Flatten())
+        
+        def autoencoder(self, filter_list=[64, 128, 256], hidden_size=256):
+                """
+                filter_list is an ordered, decreasing list of
+                num_filters which is used for decoding and
+                encoding (reversed)
+                """
+                # Encoder
+                encoder_in = Input(shape=self.input_shape, name='encoder_in')
+                x = encoder_in
+                for i, filters in enumerate(filter_list):
+                    x = Conv2D(filters = filters, kernel_size = (3, 3),
+                               activation ='relu', padding ='same',
+                               strides = 2, name=f'encoder{i+1}')(x)
+                shape = K.int_shape(x)
+                x = Flatten()(x)
+                encoder_out = Dense(hidden_size, name='encoder_out')(x)
+                encoder = Model(encoder_in, encoder_out, name='encoder')
 
-                model.add(Conv2D(256, kernel, activation='relu', padding='same', name='decode_1', strides=2))
-                model.add(Conv2D(128, kernel, activation='relu', padding='same', name='decode_2', strides=2))
-                model.add(Conv2D(64, kernel, activation='relu', padding='same', name='decode_3', strides=2))
-                model.add(Conv2D(2, kernel, activation='sigmoid', padding='same', name='ouput'))
-                return model
+                #Decoder
+                decoder_in = Input(shape=(hidden_size, ), name='decoder_in')
+                x = Dense(shape[1]*shape[2]*shape[3]) (decoder_in)
+                x = Reshape((shape[1], shape[2], shape[3])) (x)
+                for i, filters in enumerate(filter_list[::-1]):
+                        x = Conv2DTranspose(filters = filters, kernel_size = (3, 3),
+                                        activation ='relu', padding ='same',
+                                        strides = 2, name=f'decoder{i+1}')(x)
+                decoder_out = Conv2DTranspose(filters = 2, kernel_size = (3, 3),
+                                        activation ='sigmoid', padding ='same',
+                                        name='decoder_out')(x)
+                decoder = Model(decoder_in, decoder_out, name='decoder')
 
-        def autoencoder_2(self, kernel=(3,3)):
-                model = Sequential()
-                model.add(InputLayer(input_shape=self.input_shape, name='input'))
-                model.add(Conv2D(128, kernel, activation='relu', padding='same', name='encode_1', strides=(1,1)))
-                model.add(BatchNormalization())
-                model.add(Conv2D(128, kernel, activation='relu', padding='same', name='encode_2', strides=(1,1)))
-                model.add(BatchNormalization())
-                model.add(Conv2D(64, kernel, activation='relu', padding='same', name='encode_4', strides=(2,2)))
-                model.add(BatchNormalization())
-                model.add(UpSampling2D((2, 2)))
-                model.add(Conv2D(64, kernel, activation='relu', padding='same', name='decode_1', strides=(2,2)))
-                model.add(BatchNormalization())
-                model.add(Conv2D(64, kernel, activation='relu', padding='same', name='decode_2', strides=(2,2)))
-                model.add(Conv2D(32, kernel, activation='relu', padding='same', name='decode_3', strides=(2,2)))
-                model.add(Conv2D(2, kernel, activation='sigmoid', padding='same', name='ouput'))
-                model.add(BatchNormalization())
-                return model
+                return Model(encoder_in, decoder(encoder(encoder_in)), name='autoencoder')
 
         def model_s(self):
                 # X = self.norm_size[0]
@@ -303,3 +345,35 @@ class NeuralNets(object):
                 x = self.__res_block(x, filters=512)
 
                 return Model(img_input, x)
+
+        def autoencoder_1(self, kernel=(3,3)):
+                model = Sequential()
+                model.add(InputLayer(input_shape=self.input_shape, name='input'))
+                model.add(Conv2D(64, kernel, activation='relu', padding='same', name='encode_2', strides=2))
+                model.add(Conv2D(128, kernel, activation='relu', padding='same', name='encode_3', strides=2))
+                model.add(Conv2D(256, kernel, activation='relu', padding='same', name='encode_4', strides=2))
+                model.add(Flatten())
+
+                model.add(Conv2D(256, kernel, activation='relu', padding='same', name='decode_1', strides=2))
+                model.add(Conv2D(128, kernel, activation='relu', padding='same', name='decode_2', strides=2))
+                model.add(Conv2D(64, kernel, activation='relu', padding='same', name='decode_3', strides=2))
+                model.add(Conv2D(2, kernel, activation='sigmoid', padding='same', name='ouput'))
+                return model
+
+        def autoencoder_2(self, kernel=(3,3)):
+                model = Sequential()
+                model.add(InputLayer(input_shape=self.input_shape, name='input'))
+                model.add(Conv2D(128, kernel, activation='relu', padding='same', name='encode_1', strides=(1,1)))
+                model.add(BatchNormalization())
+                model.add(Conv2D(128, kernel, activation='relu', padding='same', name='encode_2', strides=(1,1)))
+                model.add(BatchNormalization())
+                model.add(Conv2D(64, kernel, activation='relu', padding='same', name='encode_4', strides=(2,2)))
+                model.add(BatchNormalization())
+                model.add(UpSampling2D((2, 2)))
+                model.add(Conv2D(64, kernel, activation='relu', padding='same', name='decode_1', strides=(2,2)))
+                model.add(BatchNormalization())
+                model.add(Conv2D(64, kernel, activation='relu', padding='same', name='decode_2', strides=(2,2)))
+                model.add(Conv2D(32, kernel, activation='relu', padding='same', name='decode_3', strides=(2,2)))
+                model.add(Conv2D(2, kernel, activation='sigmoid', padding='same', name='ouput'))
+                model.add(BatchNormalization())
+                return model

@@ -9,6 +9,7 @@ from tensorflow import keras
 import matplotlib.pyplot as plt
 from tensorflow.keras import layers
 from tensorflow.keras.models import Sequential
+from matplotlib import pyplot as plt
 
 def __prompt():
     val = input("y/n?")
@@ -61,7 +62,7 @@ def delete_model(dirName):
         print("No such directory")
     
 
-def show_images(X, predictions, enhance=False):
+def show_images(X, predictions, enhance=0):
     num_images = predictions.shape[0]
     height = predictions.shape[1]
     width = predictions.shape[2]
@@ -78,10 +79,10 @@ def show_images(X, predictions, enhance=False):
         img = Image.fromarray(canvas)
         if enhance:
             converter = ImageEnhance.Color(img)
-            img = converter.enhance(1.5)
+            img = converter.enhance(enhance)
         img.show()
 
-def save_images(X, predictions, name="mynd", enhance=False, enumerate=None):
+def save_images(X, predictions, name="mynd", enhance=0, enumerate=None):
     num_images = predictions.shape[0]
     height = predictions.shape[1]
     width = predictions.shape[2]
@@ -103,21 +104,72 @@ def save_images(X, predictions, name="mynd", enhance=False, enumerate=None):
         img = Image.fromarray(canvas)
         if enhance:
             converter = ImageEnhance.Color(img)
-            img = converter.enhance(1.5)
+            img = converter.enhance(enhance)
         if enumerate:
             img.save(os.path.join(writePath, f"{name}{enumerate+1}_{i+1}.jpg"), 'JPEG') 
         else:
             img.save(os.path.join(writePath, f"{name}{i+1}.jpg"), 'JPEG')
 
+def plot_acc_and_loss(history_arr, title, name, save=False, figsize=(5, 10), brave=False):
+    acc, val_acc, loss, val_loss = __data_from_history_arr(history_arr)
+    fig, axs = plt.subplots(2, 1, figsize=figsize)
+    axs[0].plot(acc, label="accuracy")
+    axs[0].plot(val_acc, label="validation accuracy")
+    axs[1].plot(loss, label="loss")
+    axs[1].plot(val_loss, label="validation loss")
+
+    axs[0].legend()
+    axs[1].legend()
+    
+    axs[0].set(ylabel="Accuracy")
+    axs[1].set(ylabel="Loss")
+
+    fig.suptitle(title, fontsize=20)
+    plt.xlabel("Epochs", fontsize=12)
+    
+    if save:
+        root = os.getcwd()
+        plotDir = os.path.join(root, "plot")
+
+        if not os.path.isdir(plotDir):
+            os.mkdir(plotDir)
+
+        writePath = os.path.join(plotDir, f'{name}.png')
+
+        if os.path.isfile(writePath):
+            if not brave: print("Plot already exists, overwrite?")
+            if brave or __prompt():
+                fig.savefig(writePath)
+            else:
+                return
+        else:
+            fig.savefig(writePath)
+    
+
+
+def __data_from_history_arr(history_arr):
+    """
+    acc, val_acc, loss, val_loss
+    """
+    val_acc = []
+    val_loss = []
+    acc = []
+    loss = []
+    for x in history_arr:
+        if x == None: continue
+        val_acc = val_acc + x.history["val_accuracy"]
+        val_loss = val_loss + x.history["val_loss"]
+        acc = acc + x.history["accuracy"]
+        loss = loss + x.history["loss"]
+    return acc, val_acc, loss, val_loss
+
 
 def map_to(arr):
-    func = lambda x: (x+1)/2
-    return func(arr)
+    return (arr+1)/2
     #np.vectorize(func)(arr)
 
 def map_from(arr):
-    func = lambda x: 2*x-1
-    return func(arr)
+    return arr*2-1
 
 # def map_to(arr):
 #     new_arr = np.zeros(shape=arr.shape, dtype=np.float16)

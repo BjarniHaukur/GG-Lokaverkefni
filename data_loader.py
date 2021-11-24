@@ -6,7 +6,8 @@ import numpy as np
 from PIL import Image, ImageChops
 from tqdm import tqdm
 from skimage import color
-
+import tensorflow as tf
+import tensorflow_io as tfio
 
 class MyDataLoader(object):   
 
@@ -33,9 +34,7 @@ class MyDataLoader(object):
         
         
 
-    def normalize_train_data(self, norm_size, aspect_ratio = 1.5, tolerance = 0.5):
-
-        self.norm_size = norm_size
+    def normalize_train_data(self, aspect_ratio = 1.5, tolerance = 0.5):
 
         try:
             shutil.rmtree(self.trainPath)
@@ -59,7 +58,7 @@ class MyDataLoader(object):
                     for imgName in fileNames:
                         img = Image.open(readPath+"\\"+imgName)
                         if self.__resizable(img.size, aspect_ratio, tolerance):
-                            img = img.resize(norm_size)
+                            img = img.resize(self.norm_size)
                             try:
                                 if not self.__is_greyscale(img):
                                     img.save(os.path.join(writePath, self.nameDict[category]+str(imgNumber)+".jpg"), "JPEG")
@@ -122,12 +121,7 @@ class MyDataLoader(object):
                         shutil.move(readPath, writePath)
                         
                 os.rmdir(dirPath)
-                    
-                    
-
-
-
-    
+                     
 
 
     def get_classification_data(self):                 
@@ -185,6 +179,32 @@ class MyDataLoader(object):
                         filenames[count] = os.path.join(relativePath, tempPath)
                         count = count + 1
         return filenames
+
+    def convert_all_to_npz(self):
+
+        if not os.path.isdir(self.yPath):
+            print("No such directory")
+
+        for (_, dirNames, _) in walk(self.yPath):
+
+            for dirName in dirNames:
+                dirPath = os.path.join(self.yPath, dirName)
+                for (_,_,fileNames) in walk(dirPath):
+                    
+                    if fileNames == []: continue
+                    for fileName in tqdm(fileNames):
+                        readPath = os.path.join(dirPath, fileName)
+                        image = tf.io.read_file(readPath)
+                        image = tf.image.decode_jpeg(image)
+                        image = tf.image.convert_image_dtype(image, tf.float16)
+                        image = tfio.experimental.color.rgb_to_lab(image)
+                        image = image.numpy()
+                        image[:,:,0] = image[:,:,0]/100
+                        image[:,:,1:] = (image[:,:,1:]/128+1)/2
+                        os.remove(readPath)
+                        fileName, _ = fileName.split(".jpg")
+                        writePath = os.path.join(dirPath, fileName)
+                        np.savez(writePath, image)
 
         
 
