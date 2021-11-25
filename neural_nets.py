@@ -210,6 +210,23 @@ class NeuralNets(object):
                 model.add(Conv2DTranspose(2, (3, 3), activation='sigmoid', padding='same'))
                 return model
                 
+        def model_i(self):
+                model = Sequential()
+                model.add(InputLayer(input_shape=self.input_shape))
+                model.add(Conv2D(64, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(64, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2D(128, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(128, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(256, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2DTranspose(256, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2DTranspose(128, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2DTranspose(64, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2DTranspose(32, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2DTranspose(2, (3, 3), activation='sigmoid', padding='same'))
+                return model
 
         def model_z(self):
                 X = self.norm_size[0]

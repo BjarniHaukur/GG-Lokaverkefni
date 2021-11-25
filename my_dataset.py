@@ -22,7 +22,6 @@ def parse_to_image(filename):
     image = tf.image.decode_jpeg(image)
     image = tf.image.convert_image_dtype(image, tf.float16)
     image = tfio.experimental.color.rgb_to_lab(image)
-    
     return tf.expand_dims(image[:,:,0]/100, -1), (image[:,:,1:]/128+1)/2
 
 def parse_and_augment(filename):
@@ -31,6 +30,7 @@ def parse_and_augment(filename):
     image = tf.image.convert_image_dtype(image, tf.float16)
     image = tf.image.random_flip_left_right(image)
     image = tf.image.random_flip_up_down(image)
+
     image = tfio.experimental.color.rgb_to_lab(image)
     
     return tf.expand_dims(image[:,:,0]/100, -1), (image[:,:,1:]/128+1)/2
