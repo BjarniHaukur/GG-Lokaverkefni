@@ -1,21 +1,7 @@
-import os
-from os import walk
-import shutil
-import json
-import numpy as np
-from PIL import Image, ImageChops
-from tqdm import tqdm
-from skimage import color
 import tensorflow as tf
 import tensorflow_io as tfio
-import tensorflow_addons as tfa
-from helper_funcs import map_to, map_from
+from helper_funcs import map_to
 
-
-# class MyDataSet(object):
-
-#     def __init__(self, flowDir):
-#         self.flowDir = flowDir
 
 def parse_to_image(filename):
     image = tf.io.read_file(filename)
@@ -23,6 +9,7 @@ def parse_to_image(filename):
     image = tf.image.convert_image_dtype(image, tf.float16)
     image = tfio.experimental.color.rgb_to_lab(image)
     return tf.expand_dims(image[:,:,0]/100, -1), (image[:,:,1:]/128+1)/2
+
 
 def parse_and_augment(filename):
     image = tf.io.read_file(filename)
@@ -33,19 +20,18 @@ def parse_and_augment(filename):
 
     image = tfio.experimental.color.rgb_to_lab(image)
     
-    return tf.expand_dims(image[:,:,0]/100, -1), (image[:,:,1:]/128+1)/2
+    return tf.expand_dims(image[:,:,0]/100, -1), map_to(image[:,:,1:]/128)
 
 
-def parse_to_array(filename):
-    filename.as_numpy()
-    print(type(filename))
-    arr = filename.numpy()
-    print(type(arr))
-    exit()
-    # with tf.io.gfile.GFile(filename, "r") as arr:
-    #     print(arr.next())
-    #     exit()
-    # return tf.expand_dims(arr[:,:,0], -1), arr[:,:,1:]
+def create_dataset_from_files(filenames, batch_size, num_parallel_calls, augment=False):
+    ds = tf.data.Dataset.from_tensor_slices(filenames)
+    ds = ds.shuffle(buffer_size=len(filenames))
+    if augment:
+        ds = ds.map(parse_and_augment, num_parallel_calls=num_parallel_calls)
+    else:
+        ds = ds.map(parse_to_image, num_parallel_calls=num_parallel_calls)
+    ds = ds.repeat()
+    ds = ds.batch(batch_size, drop_remainder=True)
+    ds = ds.prefetch(buffer_size=tf.data.AUTOTUNE)
+    return ds
 
-def augment_image(image):
-    return None

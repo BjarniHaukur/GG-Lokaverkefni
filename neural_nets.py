@@ -306,6 +306,38 @@ class NeuralNets(object):
 
                 return model
 
+
+        def generator_a(self):
+                model = Sequential()
+                model.add(InputLayer(input_shape=self.input_shape))
+                model.add(Conv2D(32, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(UpSampling2D((2, 2)))
+                model.add(Conv2D(64, (3, 3), activation='relu', padding='same', strides=2))
+                # model.add(Conv2D(128, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2D(128, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2D(128, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(UpSampling2D((2, 2)))
+                # model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(128, (3, 3), activation='relu', padding='same'))
+                model.add(UpSampling2D((2, 2)))
+                model.add(Conv2D(64, (3, 3), activation='relu', padding='same'))
+                model.add(UpSampling2D((2, 2)))
+                model.add(Conv2D(2, (3,3), activation='sigmoid', padding='same'))
+                return model
+
+        def discriminator_a(self):
+                model = Sequential()
+                model.add(InputLayer(input_shape=self.output_shape))
+                model.add(Conv2D(64, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Dropout(0.5))
+                model.add(Conv2D(64, (3, 3), activation='relu', padding='same'))
+                model.add(Dropout(0.5))
+                model.add(Flatten())
+                model.add(Dense(1, activation="sigmoid"))
+                return model
+
         def __res_block(self, inputs, filters=64):
                 x = Conv2D(filters, (3, 3), padding='same')(inputs)
                 x = BatchNormalization()(x)

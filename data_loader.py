@@ -11,12 +11,11 @@ import tensorflow_io as tfio
 
 class MyDataLoader(object):   
 
-    def __init__(self, dirName, norm_size, jsonName="cat_to_name.json", trainName="train", dumpName="arrays"):
+    def __init__(self, dirName, norm_size, jsonName="cat_to_name.json", trainName="train"):
         self.dirName = dirName
         self.jsonName = jsonName
         self.trainName = trainName
         self.norm_size = norm_size
-        self.dumpName = dumpName
 
         self.rootPath  = os.getcwd()
         self.dataPath  = os.path.join(self.rootPath, self.dirName)
@@ -25,8 +24,6 @@ class MyDataLoader(object):
         self.XPath = os.path.join(self.trainPath, "X")
         self.failPath  = os.path.join(self.trainPath, "fail")
         self.yPath = os.path.join(self.trainPath, "y")
-
-        self.dumpPath = os.path.join(self.rootPath, dumpName)
         
 
         with open(self.jsonName) as json_file:
@@ -54,11 +51,12 @@ class MyDataLoader(object):
 
                 for (_,_,fileNames) in walk(readPath):
 
-                    imgNumber = 1
-                    for imgName in fileNames:
+                    for imgNumber, imgName in enumerate(fileNames):
                         img = Image.open(readPath+"\\"+imgName)
                         if self.__resizable(img.size, aspect_ratio, tolerance):
                             img = img.resize(self.norm_size)
+
+                            # Really slow but some images have weird formats that make it  crash otherwise
                             try:
                                 if not self.__is_greyscale(img):
                                     img.save(os.path.join(writePath, self.nameDict[category]+str(imgNumber)+".jpg"), "JPEG")
@@ -81,25 +79,6 @@ class MyDataLoader(object):
                                     print(f"Cannot save image {imgName}")
                                     pass
                                 pass
-                        imgNumber = imgNumber + 1
-
-    def make_grayscale_data(self):
-        if os.path.isdir(self.yPath):
-            os.mkdir(self.XPath)
-            for (_, dirNames, _) in walk(self.yPath):
-                if dirNames==[]: continue
-                for category in tqdm(dirNames):
-                    readPath = os.path.join(self.yPath, category)
-                    writePath = os.path.join(self.XPath, category)
-                    os.mkdir(writePath)
-
-                    for (_,_,fileNames) in walk(readPath):
-
-                        for imgName in fileNames:
-                            img = Image.open(readPath+"\\"+imgName).convert('L')
-                            img.save(os.path.join(writePath, imgName), "JPEG")
-        else:
-            print("No such directory of normalized images. Have you executed normalize_train_data?")
 
     def all_to_one(self):
         onePath = os.path.join(self.yPath, "0")
@@ -123,44 +102,18 @@ class MyDataLoader(object):
                 os.rmdir(dirPath)
                      
 
-
-    def get_classification_data(self):                 
-        return self.__read_classification(self.__dir_size(self.XPath))   
-
-
-    def get_rgb_data(self):                  
-        return self.__read_colorization(self.__dir_size(self.XPath))
-
     def get_lab_data(self):
         lab = self.__read_lab(self.__dir_size(self.yPath))
         X = (np.expand_dims(lab[:,:,:,0], -1)/100).astype(np.float16)
         y = (lab[:,:,:,1:]/128).astype(np.float16)
         return X, y
 
-    def numpy_dump(self, arr, name):
-        if not os.path.isdir(self.dumpPath):
-            os.mkdir(self.dumpPath)
-        
-        arrPath = os.path.join(self.dumpPath, name)
-        try:
-            os.rmdir(arrPath)
-        except:
-            pass
+    def get_classification_data(self):                 
+        return self.__read_classification(self.__dir_size(self.XPath))   
 
-        np.save(arrPath, arr)
-    
-    def numpy_load(self, name):
-        if os.path.isdir(self.dumpPath):
-            read = os.path.join(self.dumpPath, name)
-            if os.path.isfile(read):
-                return np.load(read, allow_pickle=True)
-            read = os.path.join(self.dumpPath, name+".npy")
-            if os.path.isfile(read):
-                return np.load(read, allow_pickle=True)
-            else:
-                print("No such file")
-        else:
-            print("No such directory")
+    def get_rgb_data(self):                  
+        return self.__read_rgb(self.__dir_size(self.XPath))
+
 
     def get_all_filenames(self):
         size = self.__dir_size(self.yPath)

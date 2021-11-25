@@ -4,12 +4,9 @@ from PIL import ImageEnhance
 from PIL import Image
 from skimage import color
 import numpy as np
-from tqdm import tqdm
 from tensorflow import keras
-import matplotlib.pyplot as plt
-from tensorflow.keras import layers
-from tensorflow.keras.models import Sequential
 from matplotlib import pyplot as plt
+
 
 def __prompt():
     val = input("y/n?")
@@ -19,6 +16,7 @@ def __prompt():
         return False
     else:
         __prompt()
+
 
 def save_model(model, dirName, brave=False):
     root = os.getcwd()
@@ -110,8 +108,63 @@ def save_images(X, predictions, name="mynd", enhance=0, enumerate=None):
         else:
             img.save(os.path.join(writePath, f"{name}{i+1}.jpg"), 'JPEG')
 
+
+def numpy_dump(arr, name, brave=False):
+    root = os.getcwd()
+    dumpPath = os.path.join(root, "arrays")
+
+    if not os.path.isdir(dumpPath):
+        os.mkdir(dumpPath)
+    
+    arrPath = os.path.join(dumpPath, name)
+    
+    if os.path.isfile(arrPath):
+        if not brave: print("File already exists, overwrite?")
+        if brave or __prompt():
+            os.remove(arrPath)
+            np.save(arrPath, arr)
+        else:
+            return
+    
+    np.save(arrPath, arr)
+    
+
+def numpy_load(name):
+    root = os.getcwd()
+    dumpPath = os.path.join(root, "arrays")
+
+    if os.path.isdir(dumpPath):
+        readPath = os.path.join(dumpPath, name)
+        if os.path.isfile(readPath):
+            return np.load(readPath, allow_pickle=True)
+        readPath = os.path.join(dumpPath, name+".npy")
+        if os.path.isfile(readPath):
+            return np.load(readPath, allow_pickle=True)
+        else:
+            print("No such file")
+    else:
+        print("No such directory")
+
+
+def data_from_history_arr(history_arr):
+    """
+    acc, val_acc, loss, val_loss
+    """
+    val_acc = []
+    val_loss = []
+    acc = []
+    loss = []
+    for x in history_arr:
+        if x == None: continue
+        val_acc = val_acc + x.history["val_accuracy"]
+        val_loss = val_loss + x.history["val_loss"]
+        acc = acc + x.history["accuracy"]
+        loss = loss + x.history["loss"]
+    return acc, val_acc, loss, val_loss
+
+
 def plot_acc_and_loss(history_arr, title, name, save=False, figsize=(5, 10), brave=False):
-    acc, val_acc, loss, val_loss = __data_from_history_arr(history_arr)
+    acc, val_acc, loss, val_loss = data_from_history_arr(history_arr)
     fig, axs = plt.subplots(2, 1, figsize=figsize)
     axs[0].plot(acc, label="accuracy")
     axs[0].plot(val_acc, label="validation accuracy")
@@ -147,23 +200,6 @@ def plot_acc_and_loss(history_arr, title, name, save=False, figsize=(5, 10), bra
     
 
 
-def __data_from_history_arr(history_arr):
-    """
-    acc, val_acc, loss, val_loss
-    """
-    val_acc = []
-    val_loss = []
-    acc = []
-    loss = []
-    for x in history_arr:
-        if x == None: continue
-        val_acc = val_acc + x.history["val_accuracy"]
-        val_loss = val_loss + x.history["val_loss"]
-        acc = acc + x.history["accuracy"]
-        loss = loss + x.history["loss"]
-    return acc, val_acc, loss, val_loss
-
-
 def map_to(arr):
     return (arr+1)/2
     #np.vectorize(func)(arr)
@@ -171,19 +207,10 @@ def map_to(arr):
 def map_from(arr):
     return arr*2-1
 
-# def map_to(arr):
-#     new_arr = np.zeros(shape=arr.shape, dtype=np.float16)
-#     for i in range(arr.shape[3]):
-#         arr_min = np.min(arr[:,:,:,i])
-#         arr_max = np.max(arr[:,:,:,i])
-#         new_arr[:,:,:,i] = (arr[:,:,:,i]-arr_min)/(arr_max-arr_min)
-#     return new_arr
 
-# def map_from(arr, old):
-#     new_arr = np.zeros(shape=arr.shape, dtype=np.float16)
-#     for i in range(arr.shape[3]):
-#         old_min = np.min(old[:,:,:,i])
-#         old_max = np.max(old[:,:,:,i])
-#         new_arr[:,:,:,i] = arr[:,:,:,i]*(old_max-old_min)+old_min
-#     return new_arr
+
+
+
+
+
 
