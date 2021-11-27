@@ -369,6 +369,7 @@ myndir/
 
 combine3/
 
+*.jpg
 
 plot/
 [Rr]eleases/
