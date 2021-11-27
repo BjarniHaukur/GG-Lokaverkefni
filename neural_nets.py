@@ -3,6 +3,7 @@ from keras.layers import *
 from keras.models import Model
 from keras.regularizers import l2, l1
 from keras import backend as K
+from keras.utils.generic_utils import get_custom_objects
 from tensorflow.keras.optimizers.schedules import PolynomialDecay
 from tensorflow.keras.optimizers import Adam
 from keras import Sequential
@@ -326,6 +327,25 @@ class NeuralNets(object):
                 model.add(UpSampling2D((2, 2)))
                 model.add(Conv2D(2, (3,3), activation='sigmoid', padding='same'))
                 return model
+                
+        
+        def generator_b(self):
+                model = Sequential()
+                model.add(InputLayer(input_shape=self.input_shape))
+                model.add(Conv2D(64, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(64, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2D(128, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(128, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(256, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2D(512, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2DTranspose(256, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2DTranspose(128, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2DTranspose(64, (3, 3), activation='relu', padding='same', strides=2))
+                model.add(Conv2DTranspose(32, (3, 3), activation='relu', padding='same'))
+                model.add(Conv2DTranspose(2, (3, 3), activation='sigmoid', padding='same'))
+                return model
 
         def discriminator_a(self):
                 model = Sequential()
@@ -335,7 +355,22 @@ class NeuralNets(object):
                 model.add(Conv2D(64, (3, 3), activation='relu', padding='same'))
                 model.add(Dropout(0.5))
                 model.add(Flatten())
-                model.add(Dense(1, activation="sigmoid"))
+                model.add(Dense(1, activation='sigmoid'))
+                return model
+
+        def discriminator_b(self):
+                model = Sequential()
+                model.add(InputLayer(input_shape=self.output_shape))
+                model.add(Conv2D(64, (3, 3), activation='leaky_relu', padding='same', strides=2))
+                model.add(Dropout(0.5))
+                model.add(Conv2D(128, (3, 3), activation='leaky_relu', padding='same', strides=2))
+                model.add(Dropout(0.5))
+                model.add(Conv2D(256, (3, 3), activation='leaky_relu', padding='same', strides=2))
+                model.add(Dropout(0.5))
+                model.add(Conv2D(512, (3, 3), activation='leaky_relu', padding='same'))
+                model.add(Dropout(0.5))
+                model.add(Flatten())
+                model.add(Dense(1, activation='leaky_relu'))
                 return model
 
         def __res_block(self, inputs, filters=64):
